@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="A simple CGPA calculator for semester and total CGPA calculations.">
+    <meta name="theme-color" content="#2563eb">
+    <title>CGPA Calculator</title>
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="icon" href="icon.svg" type="image/svg+xml">
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: Arial, sans-serif;
+            background: #eef2f6;
+            color: #1f2933;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 24px;
+        }
+
+        .box {
+            background: white;
+            width: min(820px, 100%);
+            padding: 24px;
+            border-radius: 8px;
+            box-shadow: 0 12px 30px rgba(15, 23, 42, 0.12);
+        }
+
+        h1 {
+            margin: 0 0 22px;
+            text-align: center;
+        }
+
+        .calculator {
+            padding: 20px 0;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .calculator:first-of-type {
+            padding-top: 0;
+            border-top: 0;
+        }
+
+        h2 {
+            margin: 0 0 14px;
+            font-size: 22px;
+            color: #1f2933;
+        }
+
+        .row-list {
+            display: grid;
+            gap: 12px;
+        }
+
+        .input-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr auto;
+            gap: 10px;
+            align-items: center;
+        }
+
+        input {
+            width: 100%;
+            padding: 11px 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 15px;
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 18px;
+        }
+
+        button {
+            padding: 10px 18px;
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 15px;
+        }
+
+        button:hover {
+            background: #1d4ed8;
+        }
+
+        button:disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+        }
+
+        .secondary {
+            background: #0f766e;
+        }
+
+        .secondary:hover {
+            background: #0d5f59;
+        }
+
+        .remove {
+            width: 42px;
+            height: 42px;
+            padding: 0;
+            background: #dc2626;
+            font-size: 22px;
+            line-height: 1;
+        }
+
+        .remove:hover {
+            background: #b91c1c;
+        }
+
+        .result {
+            min-height: 30px;
+            margin: 18px 0 0;
+            color: #15803d;
+            text-align: center;
+            font-size: 21px;
+            font-weight: bold;
+        }
+
+        .error {
+            color: #b91c1c;
+        }
+
+        @media (max-width: 560px) {
+            body {
+                align-items: flex-start;
+            }
+
+            .input-row {
+                grid-template-columns: 1fr;
+                padding-bottom: 12px;
+                border-bottom: 1px solid #e2e8f0;
+            }
+
+            .remove {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+<main class="box">
+    <h1>CGPA Calculator</h1>
+
+    <section class="calculator">
+        <h2>Semester CGPA</h2>
+        <div id="courseList" class="row-list"></div>
+
+        <div class="actions">
+            <button type="button" class="secondary" onclick="addCourse()">Add Subject</button>
+            <button type="button" onclick="calculateSemesterCGPA()">Calculate Semester</button>
+        </div>
+
+        <div id="semesterResult" class="result"></div>
+    </section>
+
+    <section class="calculator">
+        <h2>Total CGPA</h2>
+        <div id="semesterList" class="row-list"></div>
+
+        <div class="actions">
+            <button type="button" class="secondary" onclick="addSemester()">Add Semester</button>
+            <button type="button" onclick="calculateTotalCGPA()">Calculate Total CGPA</button>
+        </div>
+
+        <div id="totalResult" class="result"></div>
+    </section>
+</main>
+
+<script>
+    const courseList = document.getElementById("courseList");
+    const semesterList = document.getElementById("semesterList");
+    const semesterResult = document.getElementById("semesterResult");
+    const totalResult = document.getElementById("totalResult");
+
+    function addCourse(gpa = "", credit = "") {
+        const row = document.createElement("div");
+        row.className = "input-row course-row";
+
+        const subjectNumber = courseList.children.length + 1;
+        row.innerHTML = `
+            <input type="text" class="subject-gpa" placeholder="Subject ${subjectNumber} GPA" inputmode="decimal" value="${gpa}">
+            <input type="text" class="subject-credit" placeholder="Credit hours" inputmode="decimal" value="${credit}">
+            <button type="button" class="remove" aria-label="Remove subject" onclick="removeCourse(this)">x</button>
+        `;
+
+        courseList.appendChild(row);
+        updateRemoveButtons(courseList);
+    }
+
+    function addSemester(cgpa = "", credit = "") {
+        const row = document.createElement("div");
+        row.className = "input-row semester-row";
+
+        const semesterNumber = semesterList.children.length + 1;
+        row.innerHTML = `
+            <input type="text" class="semester-cgpa" placeholder="Semester ${semesterNumber} CGPA" inputmode="decimal" value="${cgpa}">
+            <input type="text" class="semester-credit" placeholder="Semester credit hours" inputmode="decimal" value="${credit}">
+            <button type="button" class="remove" aria-label="Remove semester" onclick="removeSemester(this)">x</button>
+        `;
+
+        semesterList.appendChild(row);
+        updateRemoveButtons(semesterList);
+    }
+
+    function removeCourse(button) {
+        button.closest(".course-row").remove();
+        renumberRows(courseList, ".subject-gpa", "Subject", "GPA");
+        updateRemoveButtons(courseList);
+        clearResult(semesterResult);
+    }
+
+    function removeSemester(button) {
+        button.closest(".semester-row").remove();
+        renumberRows(semesterList, ".semester-cgpa", "Semester", "CGPA");
+        updateRemoveButtons(semesterList);
+        clearResult(totalResult);
+    }
+
+    function renumberRows(list, selector, label, suffix) {
+        list.querySelectorAll(selector).forEach((input, index) => {
+            input.placeholder = `${label} ${index + 1} ${suffix}`;
+        });
+    }
+
+    function updateRemoveButtons(list) {
+        const rows = list.querySelectorAll(".input-row");
+        rows.forEach((row) => {
+            row.querySelector(".remove").disabled = rows.length === 1;
+        });
+    }
+
+    function calculateSemesterCGPA() {
+        const rows = courseList.querySelectorAll(".course-row");
+        const cgpa = calculateWeightedAverage(
+            rows,
+            ".subject-gpa",
+            ".subject-credit",
+            "Enter a valid GPA and credit hour for every subject.",
+            semesterResult
+        );
+
+        if (cgpa === null) {
+            return;
+        }
+
+        showResult(semesterResult, `This semester CGPA is: ${cgpa.toFixed(3)}`);
+    }
+
+    function calculateTotalCGPA() {
+        const rows = semesterList.querySelectorAll(".semester-row");
+        const cgpa = calculateWeightedAverage(
+            rows,
+            ".semester-cgpa",
+            ".semester-credit",
+            "Enter a valid CGPA and credit hour for every semester.",
+            totalResult
+        );
+
+        if (cgpa === null) {
+            return;
+        }
+
+        showResult(totalResult, `Your total CGPA is: ${cgpa.toFixed(3)}`);
+    }
+
+    function calculateWeightedAverage(rows, gradeSelector, creditSelector, errorMessage, resultElement) {
+        let totalGradePoints = 0;
+        let totalCredits = 0;
+
+        for (const row of rows) {
+            const grade = parseFloat(row.querySelector(gradeSelector).value);
+            const credit = parseFloat(row.querySelector(creditSelector).value);
+
+            if (Number.isNaN(grade) || Number.isNaN(credit) || grade < 0 || credit <= 0) {
+                showResult(resultElement, errorMessage, true);
+                return null;
+            }
+
+            totalGradePoints += grade * credit;
+            totalCredits += credit;
+        }
+
+        return totalGradePoints / totalCredits;
+    }
+
+    function showResult(element, message, isError = false) {
+        element.textContent = message;
+        element.classList.toggle("error", isError);
+    }
+
+    function clearResult(element) {
+        element.textContent = "";
+        element.classList.remove("error");
+    }
+
+    addCourse();
+    addSemester();
+</script>
+</body>
+</html>
